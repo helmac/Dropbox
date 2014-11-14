@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="com.telerik.dropbox" version="1.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+	<name>Dropbox</name>
+	<description>Cordova Sync SDK</description>
+
+	<preference name="APP_KEY" />
+	<preference name="APP_SECRET" />
+
+	<js-module name="dropbox" src="www/dropbox.js">
+		<clobbers target="dropbox" />
+	</js-module>
+
+	<engines>
+    	<engine name="cordova" version=">=3.5.0" />
+  	</engines>
+
+	<platform name="ios">
+		<config-file parent="/*" target="config.xml">
+			<feature name="Dropbox">
+				<param name="ios-package" value="CDVDropbox" />
+			</feature>
+		</config-file>
+
+		<header-file src="src/ios/CDVDropbox.h" />
+		<source-file src="src/ios/CDVDropbox.m" />
+
+		<header-file src="src/ios/AppDelegate+dropbox.h" />
+		<source-file src="src/ios/AppDelegate+dropbox.m" />
+
+		<framework src="SystemConfiguration.framework"/>
+		<framework src="CFNetwork.framework"/>
+		<framework src="Security.framework"/>
+		<framework src="QuartzCore.framework"/>
+		<framework src="libz.dylib"/>
+		<framework src="libc++.dylib"/>
+		
+		<framework custom="true" src="lib/ios/Dropbox.framework"/>
+
+
+        <config-file target="*-Info.plist" parent="APP_KEY">
+            <string>$APP_KEY</string>
+        </config-file>
+
+        <config-file target="*-Info.plist" parent="APP_SECRET">
+            <string>$APP_SECRET</string>
+        </config-file>
+
+		<config-file target="*-Info.plist" parent="CFBundleURLTypes">
+		  <array>
+		    <dict>
+		      <key>CFBundleURLSchemes</key>
+		      <array>
+		        <string>db-$APP_KEY</string>
+		      </array>
+		    </dict>
+		  </array>
+		</config-file>
+
+	</platform>
+
+
+	<platform name="android">
+
+		<source-file src="src/android/res/values/dropbox.xml" target-dir="res/values" />
+
+        <config-file target="res/values/dropbox.xml" parent="/*">
+            <string name="api_key">$APP_KEY</string>
+        </config-file>
+		
+        <config-file target="res/values/dropbox.xml" parent="/*">
+            <string name="api_key">$APP_SECRET</string>
+        </config-file>
+		
+		<config-file target="res/xml/config.xml" parent="/*">
+			<feature name="Dropbox">
+           		<param name="android-package" value="com.telerik.dropbox.DropboxPlugin"/>
+         	</feature>
+     	</config-file>
+		
+        <source-file src="lib/android/armeabi/libDropboxSync.so" target-dir="libs/armeabi"/>
+        <source-file src="lib/android/armeabi-v7a/libDropboxSync.so" target-dir="libs/armeabi-v7a"/>
+	    <source-file src="lib/android/mips/libDropboxSync.so" target-dir="libs/mips"/>
+	    <source-file src="lib/android/x86/libDropboxSync.so" target-dir="libs/x86"/>
+        <source-file src="lib/android/dropbox-sync-sdk-android.jar" target-dir="libs"/>
+      
+     	<source-file src="src/android/DropboxPlugin.java"  target-dir="src/com/telerik/dropbox" />
+
+	</platform>
+
+
+</plugin>
