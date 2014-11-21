@@ -12,7 +12,7 @@
 
 	<engines>
     	<engine name="cordova" version=">=3.5.0" />
-  	</engines>
+  </engines>
 
 	<platform name="ios">
 		<config-file parent="/*" target="config.xml">
@@ -33,9 +33,8 @@
 		<framework src="QuartzCore.framework"/>
 		<framework src="libz.dylib"/>
 		<framework src="libc++.dylib"/>
-		
-		<framework custom="true" src="lib/ios/Dropbox.framework"/>
 
+		<framework custom="true" src="lib/ios/Dropbox.framework"/>
 
         <config-file target="*-Info.plist" parent="APP_KEY">
             <string>$APP_KEY</string>
@@ -63,29 +62,48 @@
 
 		<source-file src="src/android/res/values/dropbox.xml" target-dir="res/values" />
 
-        <config-file target="res/values/dropbox.xml" parent="/*">
-            <string name="api_key">$APP_KEY</string>
-        </config-file>
-		
-        <config-file target="res/values/dropbox.xml" parent="/*">
-            <string name="api_key">$APP_SECRET</string>
-        </config-file>
-		
+		<config-file target="res/values/dropbox.xml" parent="/*">
+				<string name="app_key">$APP_KEY</string>
+        <string name="app_secret">$APP_SECRET</string>
+    </config-file>
+
 		<config-file target="res/xml/config.xml" parent="/*">
 			<feature name="Dropbox">
-           		<param name="android-package" value="com.telerik.dropbox.DropboxPlugin"/>
-         	</feature>
-     	</config-file>
-		
+		       		<param name="android-package" value="com.telerik.dropbox.DropboxPlugin"/>
+		     	</feature>
+		</config-file>
+
+		<config-file target="AndroidManifest.xml" parent="/manifest">
+				<uses-permission android:name="android.permission.INTERNET" />
+				<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+		</config-file>
+
+		<config-file target="AndroidManifest.xml" parent="/manifest/application">
+				<activity android:name="com.dropbox.sync.android.DbxAuthActivity" />
+				<activity
+				  android:name="com.dropbox.client2.android.AuthActivity"
+				  android:launchMode="singleTask" >
+				  <intent-filter>
+				    <data android:scheme="db-$APP_KEY" />
+				    <action android:name="android.intent.action.VIEW" />
+				    <category android:name="android.intent.category.BROWSABLE" />
+				    <category android:name="android.intent.category.DEFAULT" />
+				  </intent-filter>
+				</activity>
+				<service
+				  android:name="com.dropbox.sync.android.DbxSyncService"
+				  android:enabled="true"
+				  android:exported="false"
+				  android:label="Dropbox Sync" />
+  	</config-file>
+
         <source-file src="lib/android/armeabi/libDropboxSync.so" target-dir="libs/armeabi"/>
         <source-file src="lib/android/armeabi-v7a/libDropboxSync.so" target-dir="libs/armeabi-v7a"/>
 	    <source-file src="lib/android/mips/libDropboxSync.so" target-dir="libs/mips"/>
-	    <source-file src="lib/android/x86/libDropboxSync.so" target-dir="libs/x86"/>
-        <source-file src="lib/android/dropbox-sync-sdk-android.jar" target-dir="libs"/>
-      
+	    <source-file src="lib/android/x86/libDropboxSync.so" target-dir="libs/x86"/>         			<source-file src="lib/android/dropbox-sync-sdk-android.jar" target-dir="libs"/>
+
      	<source-file src="src/android/DropboxPlugin.java"  target-dir="src/com/telerik/dropbox" />
 
 	</platform>
-
 
 </plugin>
