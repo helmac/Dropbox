@@ -59,14 +59,16 @@
         NSString *relativePath = [path stringByReplacingOccurrencesOfString:@"file://" withString:@""];
 
         NSString *fileName = [relativePath lastPathComponent];
-        DBPath *newPath = [[DBPath root] childPath:fileName];
+        DBPath *newPath = nil;
 
         if (folder){
             DBPath *folderPath = [[DBPath root] childPath:folder];
 
-            [[DBFilesystem sharedFilesystem] createFolder:newPath error:&error];
+            [[DBFilesystem sharedFilesystem] createFolder:folderPath error:&error];
 
             newPath = [folderPath childPath:fileName];
+        }else{
+            newPath = [[DBPath root] childPath:fileName];
         }
 
         DBFile *file = [[DBFilesystem sharedFilesystem] createFile:newPath error:&error];

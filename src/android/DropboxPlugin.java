@@ -106,6 +106,12 @@ public class DropboxPlugin extends CordovaPlugin {
 					DbxFile dbxFile = dbxFs.create(dbxPath);
 					dbxFile.writeFromExistingFile(file, false);
 
+					JSONObject result = new JSONObject();
+
+					result.put("success", true);
+
+					callbackContext.success(result);
+
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
