@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate+dropbox.h"
+#import "CDVDropbox.h"
 #import <Dropbox/Dropbox.h>
 #import <objc/runtime.h>
 
@@ -54,16 +55,15 @@
 
 
 
-- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url
-sourceApplication:(NSString *)source annotation:(id)annotation {
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url sourceApplication:(NSString *)source annotation:(id)annotation {
     DBAccount *account = [[DBAccountManager sharedManager] handleOpenURL:url];
     if (account) {
         DBFilesystem *filesystem = [[DBFilesystem alloc] initWithAccount:account];
         [DBFilesystem setSharedFilesystem:filesystem];
-
-        return YES;
     }
-    return NO;
+    CDVDropbox *dbxPlugin = [self getCommandInstance:@"dropbox"];
+    [dbxPlugin didLinkAccount: account!=nil];
+    return YES;
 }
 
 

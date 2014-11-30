@@ -5,6 +5,8 @@
 
 @implementation CDVDropbox
 
+@synthesize callbackId;
+
 - (void)pluginInitialize
 {
     [super pluginInitialize];
@@ -20,27 +22,43 @@
 - (void)linkedAccounts:(CDVInvokedUrlCommand*)command
 {
     NSArray *accounts = [[DBAccountManager sharedManager] linkedAccounts];
+    NSMutableArray *mutableArray = [[NSMutableArray alloc] init];
 
     if (accounts){
-
-        NSMutableArray *mutableArray = [[NSMutableArray alloc] init];
-
         for (DBAccount * account in accounts){
-            [mutableArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:account.userId, @"userId", nil]];
+            [mutableArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                                      account.userId, @"userId",
+                                      account.info.userName, @"userName",
+                                      nil
+                                     ]];
         }
-
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray: mutableArray];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        });
     }
+  
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray: mutableArray];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    });
 }
 
 - (void)linkAccount:(CDVInvokedUrlCommand*)command
 {
+    self.callbackId = command.callbackId;
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [pluginResult setKeepCallback:nil];
     UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     [[DBAccountManager sharedManager] linkFromController:rootViewController];
 
+}
+
+- (void)didLinkAccount:(BOOL)linked
+{
+  if (self.callbackId != nil)
+  {
+    CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:linked];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self.commandDelegate sendPluginResult:commandResult callbackId:self.callbackId];
+    });
+  }
 }
 
 - (void)saveFile:(CDVInvokedUrlCommand*)command
@@ -67,7 +85,7 @@
             [[DBFilesystem sharedFilesystem] createFolder:folderPath error:&error];
 
             newPath = [folderPath childPath:fileName];
-        }else{
+        } else {
             newPath = [[DBPath root] childPath:fileName];
         }
 

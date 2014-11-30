@@ -36,7 +36,7 @@ You need to obtain dropbox APP_KEY and APP_SECRET. This will be prompted as you 
 
 Once you have your keys, you can install the plugin as follows:
 
-    cordova plugin add url —variable APP_KEY=# --variable APP_SECRET=#
+    cordova plugin add url -—variable APP_KEY=# ---variable APP_SECRET=#
 
 ## Methods
 
