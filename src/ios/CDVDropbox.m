@@ -54,9 +54,10 @@
 {
   if (self.callbackId != nil)
   {
-    CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:linked];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@(linked), @"success", nil]];
+
     dispatch_async(dispatch_get_main_queue(), ^{
-      [self.commandDelegate sendPluginResult:commandResult callbackId:self.callbackId];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
     });
   }
 }
