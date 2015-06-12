@@ -60,7 +60,7 @@ public class DropboxPlugin extends CordovaPlugin {
 	}
 
 	public void linkAcccount() {
-		((CordovaActivity) this.cordova.getActivity()).setActivityResultCallback(this);
+		this.cordova.setActivityResultCallback(this);
 		accountManager.startLink(cordova.getActivity(), REQUEST_LINK_TO_DBX);
 	}
 
