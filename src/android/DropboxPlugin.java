@@ -29,10 +29,10 @@ public class DropboxPlugin extends CordovaPlugin {
 	protected void pluginInitialize() {
 		Context context= this.cordova.getActivity().getApplicationContext();
 
-		int appResId = cordova.getActivity().getResources().getIdentifier("app_key", "string", cordova.getActivity().getPackageName());
+		int appResId = cordova.getActivity().getResources().getIdentifier("dropbox_app_key", "string", cordova.getActivity().getPackageName());
 		String appKey = cordova.getActivity().getString(appResId);
 
-		appResId = cordova.getActivity().getResources().getIdentifier("app_secret", "string", cordova.getActivity().getPackageName());
+		appResId = cordova.getActivity().getResources().getIdentifier("dropbox_app_secret", "string", cordova.getActivity().getPackageName());
 
 		String appSecret = cordova.getActivity().getString(appResId);
 
