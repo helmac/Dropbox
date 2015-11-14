@@ -45,8 +45,8 @@
 - (void)initDropbox:(NSNotification *)notification
 {
     if (notification){
-        NSString *appKey = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"APP_KEY"];
-        NSString *appSecret = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"APP_SECRET"];
+        NSString *appKey = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"DropboxAppKey"];
+        NSString *appSecret = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"DropboxAppSecret"];
 
         DBAccountManager *accountManager = [[DBAccountManager alloc] initWithAppKey:appKey secret:appSecret];
         [DBAccountManager setSharedManager:accountManager];
