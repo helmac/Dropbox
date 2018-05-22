@@ -8,7 +8,7 @@
 
 #import "AppDelegate+dropbox.h"
 #import "CDVDropbox.h"
-#import <Dropbox/Dropbox.h>
+#import <ObjectiveDropboxOfficial/ObjectiveDropboxOfficial.h>
 #import <objc/runtime.h>
 
 @implementation AppDelegate (dropbox)
@@ -48,8 +48,7 @@
         NSString *appKey = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"DropboxAppKey"];
         NSString *appSecret = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"DropboxAppSecret"];
 
-        DBAccountManager *accountManager = [[DBAccountManager alloc] initWithAppKey:appKey secret:appSecret];
-        [DBAccountManager setSharedManager:accountManager];
+        [DBClientsManager setupWithAppKey:@appKey];
     }
 }
 
