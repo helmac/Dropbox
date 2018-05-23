@@ -1,7 +1,10 @@
 /********* CDVDropbox.m Cordova Plugin Implementation *******/
 
 #import "CDVDropbox.h"
-#import <Dropbox/Dropbox.h>
+#import <ObjectiveDropboxOfficial/ObjectiveDropboxOfficial.h>
+
+static NSString *accessTokenKey = @"DropboxTelerikAccessToken";
+CDVInvokedUrlCommand* onProgressCommand = nil;
 
 @implementation CDVDropbox
 
@@ -10,30 +13,13 @@
 - (void)pluginInitialize
 {
     [super pluginInitialize];
-
-    DBAccount *account = [[DBAccountManager sharedManager] linkedAccount];
-
-    if (account) {
-        DBFilesystem *filesystem = [[DBFilesystem alloc] initWithAccount:account];
-        [DBFilesystem setSharedFilesystem:filesystem];
-    }
 }
 
 - (void)linkedAccounts:(CDVInvokedUrlCommand*)command
 {
-    NSArray *accounts = [[DBAccountManager sharedManager] linkedAccounts];
-    NSMutableArray *mutableArray = [[NSMutableArray alloc] init];
-
-    if (accounts){
-        for (DBAccount * account in accounts){
-            [mutableArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-                                      account.userId, @"userId",
-                                      account.info.userName, @"userName",
-                                      nil
-                                     ]];
-        }
-    }
-  
+    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"DropboxAuthKey"];
+    NSArray *mutableArray = @[accessToken];
+    
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray: mutableArray];
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -42,12 +28,22 @@
 
 - (void)linkAccount:(CDVInvokedUrlCommand*)command
 {
-    self.callbackId = command.callbackId;
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [pluginResult setKeepCallback:nil];
-    UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
-    [[DBAccountManager sharedManager] linkFromController:rootViewController];
+    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"DropboxAuthKey"];
 
+    self.callbackId = command.callbackId;
+
+    if (accessToken == nil) {
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [pluginResult setKeepCallback:nil];
+        UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+        [DBClientsManager authorizeFromController:[UIApplication sharedApplication]
+                                       controller:rootViewController
+                                          openURL:^(NSURL *url) {
+                                              [[UIApplication sharedApplication] openURL:url];
+                                          }];
+    } else {
+        [self didLinkAccount:YES];
+    }
 }
 
 - (void)didLinkAccount:(BOOL)linked
@@ -62,6 +58,81 @@
   }
 }
 
+- (void)uploadFile:(NSString*)filePath uploadFolder:(NSString*)uploadFilePath saveFileCommand:(CDVInvokedUrlCommand*)command {
+    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"DropboxAuthKey"];
+    DBUserClient *client;
+    
+    if (accessToken != nil) {
+        client = [[DBUserClient alloc] initWithAccessToken:accessToken];
+    } else {
+        client = [DBClientsManager authorizedClient];
+    }
+    
+    NSMutableDictionary<NSURL *, DBFILESCommitInfo *> *uploadFilesUrlsToCommitInfo = [NSMutableDictionary new];
+    DBFILESCommitInfo *commitInfo = [[DBFILESCommitInfo alloc] initWithPath:uploadFilePath];
+    [uploadFilesUrlsToCommitInfo setObject:commitInfo forKey:[NSURL fileURLWithPath:filePath]];
+    
+    [client.filesRoutes batchUploadFiles:uploadFilesUrlsToCommitInfo
+                                   queue:nil
+                           progressBlock:^(int64_t uploaded, int64_t uploadedTotal, int64_t expectedToUploadTotal) {
+                               NSLog(@"Uploaded: %lld  UploadedTotal: %lld  ExpectedToUploadTotal: %lld", uploaded, uploadedTotal,
+                                     expectedToUploadTotal);
+                               CDVPluginResult* pluginResult = nil;
+
+                               pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@(1), @"attempt", @(uploadedTotal), @"uploaded", @(expectedToUploadTotal), @"size", nil]];
+                               
+                               [pluginResult setKeepCallbackAsBool:YES];
+                               
+                               dispatch_async(dispatch_get_main_queue(), ^{
+                                   [self.commandDelegate sendPluginResult:pluginResult callbackId:onProgressCommand.callbackId];
+                               });
+                           }
+                           responseBlock:^(NSDictionary<NSURL *, DBFILESUploadSessionFinishBatchResultEntry *> *fileUrlsToBatchResultEntries,
+                                           DBASYNCPollError *finishBatchRouteError, DBRequestError *finishBatchRequestError,
+                                           NSDictionary<NSURL *, DBRequestError *> *fileUrlsToRequestErrors) {
+                               CDVPluginResult* pluginResult = nil;
+
+                               if (fileUrlsToBatchResultEntries) {
+                                   NSLog(@"Call to `/upload_session/finish_batch/check` succeeded");
+                                   for (NSURL *clientSideFileUrl in fileUrlsToBatchResultEntries) {
+                                       DBFILESUploadSessionFinishBatchResultEntry *resultEntry = fileUrlsToBatchResultEntries[clientSideFileUrl];
+                                       if ([resultEntry isSuccess]) {
+                                           NSString *dropboxFilePath = resultEntry.success.pathDisplay;
+                                           NSLog(@"File successfully uploaded from %@ on local machine to %@ in Dropbox.",
+                                                 [clientSideFileUrl path], dropboxFilePath);
+                                            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@(YES), @"success", nil]];
+                                       } else if ([resultEntry isFailure]) {
+                                           // This particular file was not uploaded successfully, although the other
+                                           // files may have been uploaded successfully. Perhaps implement some retry
+                                           // logic here based on `uploadNetworkError` or `uploadSessionFinishError`
+//                                           DBRequestError *uploadNetworkError = fileUrlsToRequestErrors[clientSideFileUrl];
+//                                           DBFILESUploadSessionFinishError *uploadSessionFinishError = resultEntry.failure;
+// TODO
+                                           // implement appropriate retry logic
+                                       }
+                                   }
+                               }
+                               
+                               if (finishBatchRouteError) {
+                                   NSLog(@"Either bug in SDK code, or transient error on Dropbox server");
+                                   NSLog(@"%@", finishBatchRouteError);
+                                   pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"%@", finishBatchRouteError]];
+                               } else if (finishBatchRequestError) {
+                                   NSLog(@"Request error from calling `/upload_session/finish_batch/check`");
+                                   NSLog(@"%@", finishBatchRequestError);
+                                   pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"%@", finishBatchRequestError]];
+                               } else if ([fileUrlsToRequestErrors count] > 0) {
+                                   NSLog(@"Other additional errors (e.g. file doesn't exist client-side, etc.).");
+                                   NSLog(@"%@", fileUrlsToRequestErrors);
+                                   pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"%@", fileUrlsToRequestErrors]];
+                               }
+                               
+                               dispatch_async(dispatch_get_main_queue(), ^{
+                                   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                               });
+                           }];
+}
+
 - (void)saveFile:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
@@ -71,44 +142,30 @@
     NSArray *paths = [body objectForKey:@"files"];
     NSString *folder = [body objectForKey:@"folder"];
 
-    NSError *error = nil;
-
     for (NSString *path in paths){
         // normalize
         NSString *relativePath = [path stringByReplacingOccurrencesOfString:@"file://" withString:@""];
 
         NSString *fileName = [relativePath lastPathComponent];
-        DBPath *newPath = nil;
-
-        if (folder){
-            DBPath *folderPath = [[DBPath root] childPath:folder];
-
-            [[DBFilesystem sharedFilesystem] createFolder:folderPath error:&error];
-
-            newPath = [folderPath childPath:fileName];
-        } else {
-            newPath = [[DBPath root] childPath:fileName];
+        
+        NSString *uploadPath = [NSString pathWithComponents:[NSArray arrayWithObjects:@"/",folder,fileName, nil]];
+        
+        @try {
+            [self uploadFile:relativePath uploadFolder:uploadPath saveFileCommand:command];
         }
+        @catch (NSException * error) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.reason];
 
-        DBFile *file = [[DBFilesystem sharedFilesystem] createFile:newPath error:&error];
-
-        NSData *data = [[NSFileManager defaultManager] contentsAtPath:relativePath];
-
-        [file writeData:data error:&error];
-
-        if (error){
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            });
         }
     }
-
-    if (!error){
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@(YES), @"success", nil]];
-    }
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    });
 }
 
+- (void)onProgressUpload:(CDVInvokedUrlCommand*)command
+{
+    onProgressCommand = command;
+}
 
 @end

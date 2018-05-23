@@ -12,7 +12,11 @@
     </js-module>
 
     <engines>
-        <engine name="cordova" version=">=3.5.0"/>
+        <engine name="cordova" version=">=6.4.0" />
+        <engine name="cordova-ios" version=">=4.3.0" />
+        <engine name="cordova-android" version=">=5.1.0" />
+        <engine name="apple-xcode" version=">=8.0.0" />
+        <engine name="apple-ios" version=">=7.0.0" />
     </engines>
 
     <platform name="ios">
@@ -35,8 +39,7 @@
         <framework src="libz.dylib"/>
         <framework src="libc++.dylib"/>
 
-        <framework custom="true" src="lib/ios/Dropbox.framework"/>
-        <framework src="Dropbox-iOS-SDK" type="podspec" spec="~> 2.0.0" />
+        <framework src="ObjectiveDropboxOfficial" type="podspec" spec="" />
         
         <config-file target="*-Info.plist" parent="DropboxAppKey">
             <string>$APP_KEY</string>

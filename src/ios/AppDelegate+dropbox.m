@@ -46,24 +46,29 @@
 {
     if (notification){
         NSString *appKey = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"DropboxAppKey"];
-        NSString *appSecret = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"DropboxAppSecret"];
 
-        [DBClientsManager setupWithAppKey:@appKey];
+        [DBClientsManager setupWithAppKey:appKey];
     }
 }
-
-
 
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url sourceApplication:(NSString *)source annotation:(id)annotation {
-    DBAccount *account = [[DBAccountManager sharedManager] handleOpenURL:url];
-    if (account) {
-        DBFilesystem *filesystem = [[DBFilesystem alloc] initWithAccount:account];
-        [DBFilesystem setSharedFilesystem:filesystem];
+    DBOAuthResult *authResult = [DBClientsManager handleRedirectURL:url];
+    BOOL didLinkAccount = NO;
+    if (authResult != nil) {
+        if ([authResult isSuccess]) {
+            NSLog(@"Success! User is logged into Dropbox.");
+            NSString *accessToken = [[authResult accessToken] accessToken];
+            [[NSUserDefaults standardUserDefaults] setObject:accessToken forKey:@"DropboxAuthKey"];
+            didLinkAccount = YES;
+        } else if ([authResult isCancel]) {
+            NSLog(@"Authorization flow was manually canceled by user!");
+        } else if ([authResult isError]) {
+            NSLog(@"Error: %@", authResult);
+        }
     }
     CDVDropbox *dbxPlugin = [self getCommandInstance:@"dropbox"];
-    [dbxPlugin didLinkAccount: account!=nil];
+    [dbxPlugin didLinkAccount: didLinkAccount];
     return YES;
 }
-
 
 @end
