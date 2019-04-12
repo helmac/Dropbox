@@ -3,7 +3,6 @@
   "description": "Dropbox",
   "version": "1.0.0",
   "licence": "MIT",
-  "private": true,
   "author": "@helmac",
   "repository": {
     "type": "git",
