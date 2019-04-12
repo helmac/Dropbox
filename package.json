@@ -10,7 +10,7 @@
     "url": "https://github.com/helmac/Dropbox.git"
   },
   "cordova": {
-    "id": "cordova-plugin-filepath",
+    "id": "com.telerik.dropbox",
     "platforms": [
       "android",
       "ios"
