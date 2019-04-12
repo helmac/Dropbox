@@ -8,5 +8,19 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/helmac/Dropbox.git"
-  }
+  },
+  "cordova": {
+    "id": "cordova-plugin-filepath",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "keywords": [
+    "cordova",
+    "dropbox",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ]
 }
