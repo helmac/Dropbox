@@ -6,7 +6,7 @@
   "author": "Luis Rodriguez",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/helmac/Dropbox.git"
+    "url": "https://github.com/helmac/Dropbox.git"
   },
   "cordova": {
     "id": "com.telerik.dropbox",
