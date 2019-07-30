@@ -39,7 +39,7 @@
         <framework src="libz.dylib"/>
         <framework src="libc++.dylib"/>
 
-        <framework src="ObjectiveDropboxOfficial" type="podspec" spec="" />
+        <framework src="ObjectiveDropboxOfficial" type="podspec" spec="~> 3.10" />
         
         <config-file target="*-Info.plist" parent="DropboxAppKey">
             <string>$APP_KEY</string>
