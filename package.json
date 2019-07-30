@@ -1,7 +1,7 @@
 {
-  "name": "com.telerik.dropbox",
+  "name": "helmac.dropbox",
   "description": "Dropbox",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "licence": "MIT",
   "author": "Luis Rodriguez",
   "repository": {
@@ -9,7 +9,7 @@
     "url": "https://github.com/helmac/Dropbox.git"
   },
   "cordova": {
-    "id": "com.telerik.dropbox",
+    "id": "helmac.dropbox",
     "platforms": [
       "android",
       "ios"
